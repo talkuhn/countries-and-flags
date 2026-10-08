@@ -288,12 +288,7 @@ button:focus-visible { outline: 4px solid #4a7bff; outline-offset: 2px; }
 #sea [data-sea="octopus"] .hit, #sea [data-sea="monster"] .hit, #sea [data-sea="ship"] .hit { pointer-events: all; cursor: pointer; }
 #map.play #sea .hit { pointer-events: none; }
 
-/* "tap me" cues, no text: water ripples under each creature, a small hop every few seconds and a squish while pressed */
-#sea .rip { fill: rgba(255,255,255,.16); stroke: #fff; stroke-width: 2.2px; opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; animation: ripple 4.2s ease-out infinite; }
-#sea .rip:nth-child(1) { animation-delay: var(--rd, 0s); }
-#sea .rip:nth-child(2) { animation-delay: calc(var(--rd, 0s) + 1.4s); }
-#sea .rip:nth-child(3) { animation-delay: calc(var(--rd, 0s) + 2.8s); }
-@keyframes ripple { 0% { transform: scale(.55); opacity: 0; } 18% { opacity: .8; } 100% { transform: scale(1.6); opacity: 0; } }
+/* "tap me" cues, no text: a small hop every few seconds and a squish while pressed */
 #sea .hop { transform-box: fill-box; transform-origin: 50% 100%; animation: hop var(--hp, 6.5s) ease-in-out var(--hd, 0s) infinite; }
 @keyframes hop {
   0%, 70%, 100% { transform: translateY(0) scale(1, 1); }
@@ -304,12 +299,9 @@ button:focus-visible { outline: 4px solid #4a7bff; outline-offset: 2px; }
 }
 #sea .press { transform-box: fill-box; transform-origin: 50% 100%; transition: transform .14s ease-out; }
 #sea [data-sea].pressed .press { transform: scale(.92, .88); }
-#map.play #sea .rip, #map.play #sea .hop { animation-play-state: paused; }
+#map.play #sea .hop { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) {
   #sea .hop { animation: none; }
-  #sea .rip { animation: none; }
-  #sea .rip:nth-child(n+2) { display: none; }
-  #sea .rip:nth-child(1) { opacity: .55; }
 }
 
 /* ---------- arcade games ---------- */
@@ -1797,16 +1789,14 @@ window.createTreasure = (A) => {
   const seaLayer = document.createElementNS(NS, "g");
   seaLayer.id = "sea"; seaLayer.setAttribute("pointer-events", "none"); seaLayer.setAttribute("aria-hidden", "true");
   const seaItems = {};
-  // where the ripples sit under each creature (x, y, half-width, half-height in the creature's own units) and when its cues start
-  const RIPPLE_AT = { ship: [0, 40, 76, 18], monster: [-10, 30, 108, 22], octopus: [0, 26, 80, 18] };
-  const CUE_TIMING = { ship: [0, 1.2, 6.4], octopus: [1.1, 3.4, 7.2], monster: [2.2, 5.6, 7.8] }; // ripple delay, hop delay, hop period (s)
+  // when each creature starts hopping and how often (s): a small hop every few seconds says "tap me" without any text
+  const CUE_TIMING = { ship: [1.2, 6.4], octopus: [3.4, 7.2], monster: [5.6, 7.8] };
   if (window.SEA) {
     [["ship", "ship"], ["octopus", "octopus"], ["monster", "monster"]].forEach(([id, art]) => {
       const g = document.createElementNS(NS, "g"); g.dataset.sea = id;
-      const [rx, ry, rw, rh] = RIPPLE_AT[id], [rd, hd, hp] = CUE_TIMING[id];
-      g.style.setProperty("--rd", rd + "s"); g.style.setProperty("--hd", hd + "s"); g.style.setProperty("--hp", hp + "s");
-      const rip = `<ellipse class="rip" cx="${rx}" cy="${ry}" rx="${rw}" ry="${rh}" vector-effect="non-scaling-stroke"/>`;
-      g.innerHTML = `<g class="ripples">${rip}${rip}${rip}</g><g class="press"><g class="hop">${window.SEA[art]}</g></g>`;
+      const [hd, hp] = CUE_TIMING[id];
+      g.style.setProperty("--hd", hd + "s"); g.style.setProperty("--hp", hp + "s");
+      g.innerHTML = `<g class="press"><g class="hop">${window.SEA[art]}</g></g>`;
       seaLayer.appendChild(g); seaItems[id] = g;
     });
     svg.insertBefore(seaLayer, gC);
